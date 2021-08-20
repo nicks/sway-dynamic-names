@@ -1,24 +1,32 @@
-from setuptools import setup
-
+from setuptools import setup, find_packages
 
 with open('README.md') as f:
     long_description = f.read()
 
-setup(name='i3-workspace-names-daemon',
-      version='0.15.0',
-      description='Dynamically update the name of each i3wm workspace using font-awesome icons or the names of applications running in each workspace.',
+setup(name='sway-dynamic-names',
+      description='Dynamically update the name of each Sway WM workspace using font-awesome icons',
       long_description=long_description,
       long_description_content_type='text/markdown',
-      url='https://github.com/cboddy/i3-workspace-names-daemon',
+      url='https://github.com/j-waters/sway-dynamic-workspace-names',
       license='MIT',
-      zip_safe=False,
-      py_modules=['i3_workspace_names_daemon', 'fa_icons'],
-      install_requires=["i3ipc"],
-      author='Chris Boddy',
-      author_email='chris@boddy.im',
+      install_requires=["i3ipc", "pyyaml", "fontawesome", "xdg", "Click"],
+      author='James Waters',
+      author_email='james@jcwaters.co.uk',
+      packages=find_packages(),
+      include_package_data=True,
       entry_points={
           'console_scripts': [
-              'i3-workspace-names-daemon=i3_workspace_names_daemon:main'
+              'sway-dynamic-names=sway_dynamic_names.__main__:main'
           ]
-      }
+      },
+      setup_requires=['setuptools-git-versioning'],
+      version_config={
+          "template": "{tag}",
+          "dev_template": "{tag}.dev{ccount}+git.{sha}",
+          "dirty_template": "{tag}.dev{ccount}+git.{sha}.dirty",
+          "starting_version": "0.0.1",
+          "version_file": "",
+          "count_commits_from_version_file": False
+      },
+      python_requires='>=3.8',
       )
