@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/wayland-dynamic-workspace-names.iml" filepath="$PROJECT_DIR$/.idea/wayland-dynamic-workspace-names.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/sway-dynamic-names.iml" filepath="$PROJECT_DIR$/.idea/sway-dynamic-names.iml" />
     </modules>
   </component>
 </project>

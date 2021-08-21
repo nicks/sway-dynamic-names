@@ -3,7 +3,7 @@ pkgname=$_pkgname-git
 pkgrel=1
 pkgver=0.0.1
 pkgdesc="Dynamically update the name of each Sway WM workspace using font-awesome icons"
-url="https://github.com/j-waters/sway-dynamic-workspace-names"
+url="https://github.com/j-waters/sway-dynamic-names"
 depends=('python-click'
          'python-yaml'
          'python-i3ipc'
@@ -20,7 +20,7 @@ md5sums=("SKIP")
 
 pkgver() {
     cd "$srcdir/$_pkgname"
-    git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+    git describe --long --tags | sed 's/^v//;s/\([^-]*-g\)/r\1/;s/-/./g'
 }
 
 build() {
