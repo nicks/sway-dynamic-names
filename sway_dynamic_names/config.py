@@ -79,7 +79,7 @@ class Config:
 
     @staticmethod
     def _find_sway_folders():
-        possible_paths = [BaseDirectory.xdg_config_home.joinpath(pp) for pp in POSSIBLE_SWAY_CONFIG_PATHS]
+        possible_paths = [os.path.join(BaseDirectory.xdg_config_home, pp) for pp in POSSIBLE_SWAY_CONFIG_PATHS]
         return [pp for pp in possible_paths if pp.exists()]
 
     @staticmethod
