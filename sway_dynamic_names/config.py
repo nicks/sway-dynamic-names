@@ -6,7 +6,7 @@ from typing import Dict, Union
 import yaml
 from fontawesome import icons
 from i3ipc.aio import Con
-from xdg import XDG_CONFIG_HOME
+from xdg import BaseDirectory
 
 POSSIBLE_SWAY_CONFIG_PATHS = ['sway', 'i3']
 
@@ -79,7 +79,7 @@ class Config:
 
     @staticmethod
     def _find_sway_folders():
-        possible_paths = [XDG_CONFIG_HOME.joinpath(pp) for pp in POSSIBLE_SWAY_CONFIG_PATHS]
+        possible_paths = [BaseDirectory.xdg_config_home.joinpath(pp) for pp in POSSIBLE_SWAY_CONFIG_PATHS]
         return [pp for pp in possible_paths if pp.exists()]
 
     @staticmethod
