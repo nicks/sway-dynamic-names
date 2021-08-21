@@ -74,7 +74,6 @@ class Config:
         for possible_path in [pp.joinpath(CONFIG_FILE_NAME) for pp in Config._find_sway_folders()]:
             if possible_path.exists():
                 return possible_path
-        print(Config._find_sway_folders())
         return Config._create_config(Config._find_sway_folders()[0].joinpath(CONFIG_FILE_NAME))
 
     @staticmethod
