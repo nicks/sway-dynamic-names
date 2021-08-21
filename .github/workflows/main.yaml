@@ -31,7 +31,7 @@ jobs:
       - name: ls
         run: "ls -la"
       - name: Publish AUR package
-        uses: KSXGitHub/github-actions-deploy-aur@master
+        uses: KSXGitHub/github-actions-deploy-aur@40901a3bceb045a3b1bcf168fceffbaba762b3b1
         with:
           pkgname: sway-dynamic-names-git
           pkgbuild: ./PKGBUILD
