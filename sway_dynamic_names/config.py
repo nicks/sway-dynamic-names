@@ -79,11 +79,12 @@ class Config:
 
     @staticmethod
     def _find_sway_folders():
-        possible_paths = [os.path.join(BaseDirectory.xdg_config_home, pp) for pp in POSSIBLE_SWAY_CONFIG_PATHS]
+        config_base = Path(BaseDirectory.xdg_config_home)
+        possible_paths = [config_base.joinpath(pp) for pp in POSSIBLE_SWAY_CONFIG_PATHS]
         return [pp for pp in possible_paths if pp.exists()]
 
     @staticmethod
-    def _create_config(config_location: str):
+    def _create_config(config_location: Path):
         print(f"Creating default config file at {config_location}")
         copyfile(Config._default_config_path(), config_location)
         return config_location
