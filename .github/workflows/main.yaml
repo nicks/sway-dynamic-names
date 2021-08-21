@@ -26,6 +26,10 @@ jobs:
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
     steps:
       - uses: actions/checkout@v2
+      - name: ls $GITHUB_WORKSPACE
+        run: "ls -la $GITHUB_WORKSPACE"
+      - name: ls
+        run: "ls -la"
       - name: Publish AUR package
         uses: KSXGitHub/github-actions-deploy-aur@master
         with:
