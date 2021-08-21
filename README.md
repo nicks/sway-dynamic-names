@@ -1,47 +1,65 @@
 # i3-workspace-names-daemon
 
-This script dynamically updates [i3wm](https://i3wm.org/) workspace names based on the names of the windows therein. 
+This script dynamically updates [sway](https://swaywm.org/) workspace names based on the names of the windows therein. 
 
 It also allows users to define an icon to show for a named window from the [Font Awesome](https://origin.fontawesome.com/icons?d=gallery) icon list.
 
-### tl;dr 
-update i3-bar workspace names to look something like this
+A rewrite of https://github.com/cboddy/i3-workspace-names-daemon built with sway in mind, although it should still work with i3.
+
+## Examples
+The workspace names in your bar of choice will look something like this:
 
 <img src="https://raw.githubusercontent.com/cboddy/_vim_gifs/master/i3-bar-with-icons.png"></img>
 
-### install
+## Install
 
-Install the [package](https://pypi.org/project/i3-workspace-names-daemon/) from pypi with [pip](https://pypi.org/project/pip/).
+### PIP
+
+Install the [package](https://pypi.org/project/sway-dynamic-names/) from pypi with [pip](https://pypi.org/project/pip/).
 
 ```
-sudo pip3 install i3-workspace-names-daemon
+sudo pip3 install sway-dynamic-names
 ```
 
 **NB. if you don't have sudo privileges instead do**
 
 ```
-pip3 install --user i3-workspace-names-daemon
+pip3 install --user sway-dynamic-names
 ```
-##### font 
+
+### Arch
+
+Install the [package](https://aur.archlinux.org/packages/sway-dynamic-names-git/) using an aur helper like yay:
+
+```
+yay -S sway-dynamic-names-git
+```
+
+## Font 
 
 Install the [Font Awesome](https://origin.fontawesome.com/icons?d=gallery) font via your favourite package manager. This is necessary if you want to show an icon instead of a window's name in the i3 status bar. 
- 
 
-For Debian/Ubuntu et al. 
+### Debian/Ubuntu et al. 
 
 ```
 sudo apt install fonts-font-awesome
 ```
 
+### Arch
+
+```
+yay -S ttf-font-awesome
+```
+
 **NB: if the glyphs are not rendering make sure the font is installed.**
 
 
-### i3 config
+### Sway/i3 config
 
-Add the following line to your ``~/.i3/config``.
+Add the following line to your `~/.config/sway/config`.
 
 ```
-exec_always --no-startup-id exec i3-workspace-names-daemon
+exec_always --no-startup-id exec sway-dynamic-names
 ```
 
 If you use the ``$mod+1`` etc. shortcuts to switch workspaces then update the following so that the *switch to workspace* and *move focussed window to workspace* **shortcuts still work**. 
@@ -64,65 +82,42 @@ bindsym $mod+Shift+1 move container to workspace number 1
 ```
 
 
-### icons config
-Configure what icons to show for what application-windows in the file  ``~/.i3/app-icons.json`` or ``~/.config/i3/app-icons.json`` (in JSON format). For example:
+## Configuration
+Configuration is done in `~/.config/sway/sdn-config.yaml`. The default is:
 
-```
-chris@vulcan: ~$ cat ~/.i3/app-icons.json
-{
-    "firefox": "firefox",
-    "chromium-browser": "chrome",
-    "chrome": "chrome",
-    "google-chrome": "chrome",
-    "x-terminal-emulator": "terminal",
-    "thunderbird": "envelope",
-    "jetbrains-idea-ce": "edit",
-    "nautilus": "folder-open",
-    "clementine": "music",
-    "vlc": "play",
-    "signal": "comment",
-    "_no_match": "question"
-}
+```yaml
+clients:
+  google-chrome-beta: chrome
+  jetbrains-pycharm: terminal
+  firefox: firefox
+  x-terminal-emulator: terminal
+  thunderbird: envelope
+  jetbrains-idea-ce: edit
+  nautilus: folder-open
+  clementine: music
+  vlc: play
+  signal: comment
+deliminator: |
+default_icon: dot-circle
 ```
 
-NB: to validate your config file is formatted correctly run this command and check it doesn't  report an error
+### `clients`
+A mapping of `client_identifier -> name`. The daemon will try and match the `client_identifier` against: 
+`name`, `window_title`, `window_instance`, and `window_class`, as provided by sway, in that order. `client_identifier`
+can also be a regular expression.
 
-```
-python3 -m json.tool  /path/to/your/app-icons.json
-```
+If `name` matches the name of a font-awesome icon, the icon will be used. Otherwise, any unicode symbol or plain text
+can be used.
 
-where the key is the name of the i3-window (ie. what is shown in the i3-bar when it is not configured yet) and  the value is the font-awesome icon name you want to show instead, see [picking icons](#picking-icons).
+### `deliminator`
 
-Note: the hard-coded list above is used if you don't add this icon-config file.
+The symbol used to separate the names within a workspace
 
-### matching windows
+### `default_icon`
 
-You can debug windows names with `xprop`
+The icon to show if no windows in the workspace match the clients listed in the config
 
-Windows names are detected by inspecting in the following priority
-- name
-- title
-- instance
-- class
+## Picking icons 
 
-If there is no window name available a question mark is shown instead.
-
-Another (simpler) way for debugging window names is running this script with `-v` or `--verbose` flag, it is suggested to use a terminal emulator that supports unicode (eg. kitty or urxvt)
-
-### unrecognised windows
-
-If a window is not in the icon config then by default the window title will be displayed instead.
-
-The maximum length of the displayed window title can be set with the command line argument `--max_title_length` or `-l`.
-
-To show a specific icon in place of unrecognised windows, specify an icon for window `_no_match` in the icon config.
-If you want to show only that icon (hiding the name) then use the `--no-match-not-show-name` or `-n` option.
-
-### picking icons 
-
-The easiest way to pick an icon is to search for one in the [gallery](https://origin.fontawesome.com/icons?d=gallery). **NB: the "pro" icons are not available in the debian package.**
-
-### windows delimiter
-
-The window delimiter can be specified with `-d` or `--delimiter` parameter by default it is `|`.
+The easiest way to pick an icon is to search for one in the [gallery](https://origin.fontawesome.com/icons?d=gallery). **NB: the "pro" icons are not available in the debian/arch package.**
 

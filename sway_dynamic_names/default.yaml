@@ -9,3 +9,5 @@ clients:
   clementine: music
   vlc: play
   signal: comment
+deliminator: |
+default_icon: dot-circle

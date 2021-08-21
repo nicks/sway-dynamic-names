@@ -61,6 +61,6 @@ class Watcher:
 
 
 async def start():
-    config = Config(use_default=True)
+    config = Config()
     watcher = Watcher(config)
     await watcher.start()
