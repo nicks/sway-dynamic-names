@@ -10,7 +10,7 @@ depends=('python-click'
          'python-fontawesome'
          'python-pyxdg')
 makedepends=('git' 'python-setuptools')
-conflicts=()
+conflicts=('sway-dynamic-names')
 provides=('sway-dynamic-names')
 license=('MIT')
 arch=('any')
