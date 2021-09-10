@@ -49,7 +49,7 @@ class Watcher:
         for workspace, icons in workspace_icons.items():
             if not icons:
                 icons.append(self.config.default_icon)
-        return {workspace: self.config.delimiter.join(icons) for workspace, icons in workspace_icons.items()}
+        return {workspace: self.config.delimiter.join(set(icons)) for workspace, icons in workspace_icons.items()}
 
     def get_symbols(self, workspace: Con):
         for leaf in workspace.leaves():
