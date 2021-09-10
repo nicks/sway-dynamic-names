@@ -1,7 +1,8 @@
 import os
+import re
 from pathlib import Path
 from shutil import copyfile
-from typing import Dict, Union
+from typing import Dict, Union, List, Match
 
 import yaml
 from fontawesome import icons
@@ -15,22 +16,66 @@ CONFIG_FILE_NAME = 'sdn-config.yaml'
 DEFAULT_DELIMITER = "|"
 DEFAULT_DEFAULT_ICON = "dot-circle"
 
+WINDOW_IDENTIFIERS = ('name', 'window_title', 'window_instance', 'window_class')
 
 class ConfigException(Exception):
+    pass
+
+class RuntimeConfigException(Exception):
     pass
 
 
 class ClientConfig:
     def __init__(self, key: str, data: Union[str, Dict]):
         self.key = key
+        self.extra = None
         if type(data) == str:
-            self.icon = icons.get(data, data)
+            raw_icon = data
         elif type(data) == dict:
-            self.icon = icons.get(data['icon'], data['icon'])
+            raw_icon = data['icon']
+            self.extra = data.get('extra', None)
+            if type(self.extra) != str:
+                raise ConfigException(f'clients/{key}/extra: invalid entity {self.extra}')
         else:
             raise ConfigException(f'clients/{key}: invalid entity {data}')
 
-    def get_symbol(self, leaf: Con):
+        self.icon = icons.get(raw_icon, raw_icon)
+
+    def match(self, leaf: Con):
+        for identifier in WINDOW_IDENTIFIERS:
+            name = getattr(leaf, identifier, None)
+            if name is None:
+                continue
+            match = re.match(self.key, name, re.IGNORECASE)
+            if match:
+                return match
+
+    def get_symbol(self, leaf: Con, match: Match[str]):
+        return Symbol(self, leaf, match)
+
+
+class Symbol:
+    def __init__(self, conf: ClientConfig, leaf: Con, match: Match[str]):
+        self.conf = conf
+        self.leaf = leaf
+        self.match = match
+
+        self.icon = self.format_str(self.conf.icon)
+        self.extra = self.format_str(self.conf.extra) if self.conf.extra else None
+
+    def format_str(self, value: str):
+        d = {k: getattr(self.leaf, k, None) for k in WINDOW_IDENTIFIERS}
+        try:
+            return value.format(*self.match.groups(), **d)
+        except IndexError:
+            raise RuntimeConfigException(f"error formatting {value} with numbered values {self.match.groups()} and named values {d}")
+
+    def get(self, workspaces_symbols: List[List["Symbol"]]):
+        if self.extra is not None:
+            for symbols in workspaces_symbols:
+                for symbol in symbols:
+                    if symbol.icon == self.icon:
+                        return f"{self.icon} {self.extra}"
         return self.icon
 
 

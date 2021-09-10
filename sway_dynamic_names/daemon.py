@@ -1,10 +1,11 @@
 import re
+from typing import List, Iterable, Dict
 
 from i3ipc import Event
 from i3ipc.aio import Connection, Con
 from i3ipc.events import IpcBaseEvent
 
-from .config import Config
+from .config import Config, Symbol
 
 
 class Watcher:
@@ -27,33 +28,40 @@ class Watcher:
     async def rename_all(self):
         tree = await self.i3.get_tree()
         workspaces = tree.workspaces()
-        for num, workspace in enumerate(workspaces):
-            await self.rename_workspace(workspace, num)
+        workspace_symbols: Dict[Con, List[Symbol]] = {w: list(self.get_symbols(w)) for w in workspaces}
+        workspace_icons = self.compute_workspace_icons(workspace_symbols)
+        for num, workspace in enumerate(workspace_icons.keys()):
+            await self.rename_workspace(workspace, num, workspace_icons[workspace])
         await self.commit()
 
-    async def rename_workspace(self, workspace: Con, num: int):
-        symbols = []
-        for leaf in workspace.leaves():
-            leaf_symbol = self.get_symbol(leaf)
-            if leaf_symbol:
-                symbols.append(leaf_symbol)
-        new_name = self.config.default_icon
-        if symbols:
-            new_name = self.config.delimiter.join(symbols)
+    async def rename_workspace(self, workspace: Con, num: int, new_name: str):
         new_name = f"{num}:{new_name}"
         if workspace.name != new_name:
             workspace_name_san = workspace.name.replace('"', '\\"')
             new_name_san = new_name.replace('"', '\\"')
             self.commands.append(f'rename workspace "{workspace_name_san}" to "{new_name_san}"')
 
+    def compute_workspace_icons(self, workspace_symbols: Dict[Con, List[Symbol]]) -> Dict[Con, str]:
+        workspace_icons: Dict[Con, List[str]] = {}
+        for workspace, symbols in workspace_symbols.items():
+            other_symbols = [ss for w, ss in workspace_symbols.items() if w is not workspace]
+            workspace_icons[workspace] = [s.get(other_symbols) for s in symbols]
+        for workspace, icons in workspace_icons.items():
+            if not icons:
+                icons.append(self.config.default_icon)
+        return {workspace: self.config.delimiter.join(icons) for workspace, icons in workspace_icons.items()}
+
+    def get_symbols(self, workspace: Con):
+        for leaf in workspace.leaves():
+            leaf_symbol = self.get_symbol(leaf)
+            if leaf_symbol:
+                yield leaf_symbol
+
     def get_symbol(self, leaf: Con):
-        for identifier in ('name', 'window_title', 'window_instance', 'window_class'):
-            name = getattr(leaf, identifier, None)
-            if name is None:
-                continue
-            for name_re, conf in self.config.client_configs.items():
-                if re.match(name_re, name, re.IGNORECASE):
-                    return conf.get_symbol(leaf)
+        for conf in self.config.client_configs.values():
+            match = conf.match(leaf)
+            if match:
+                return conf.get_symbol(leaf, match)
 
     async def commit(self):
         await self.i3.command(u';'.join(self.commands))
@@ -61,6 +69,6 @@ class Watcher:
 
 
 async def start():
-    config = Config()
+    config = Config(True)
     watcher = Watcher(config)
     await watcher.start()
