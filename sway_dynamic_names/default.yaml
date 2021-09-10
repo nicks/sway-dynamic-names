@@ -10,5 +10,6 @@ clients:
   clementine: music
   vlc: play
   signal: comment
+  code-oss: code
 deliminator: " "
 default_icon: dot-circle
