@@ -1,11 +1,11 @@
 import re
-from typing import List, Iterable, Dict
+from typing import List, Iterable, Dict, Tuple, Match, Optional
 
 from i3ipc import Event
 from i3ipc.aio import Connection, Con
-from i3ipc.events import IpcBaseEvent
+from i3ipc.events import IpcBaseEvent, WindowEvent
 
-from .config import Config, Symbol
+from .config import Config, Symbol, ClientConfig
 
 
 class Watcher:
@@ -23,7 +23,32 @@ class Watcher:
         await self.i3.main()
 
     async def callback(self, conn: Connection, event: IpcBaseEvent):
+        if event.change == 'new':
+            await self.handle_move(event.container)
         await self.rename_all()
+
+    async def handle_move(self, window: Con):
+        conf, _ = self.get_config(window)
+        if conf is None or not conf.new_desktop:
+            return
+        match_identity = conf.match_identity(window)
+        tree = await self.i3.get_tree()
+        workspaces = tree.workspaces()
+        possible_targets = set()
+        current_workspace = None
+        for workspace in workspaces:
+            for leaf in workspace.leaves():
+                if leaf.id == window.id:
+                    current_workspace = workspace
+                    continue
+                leaf_conf, _ = self.get_config(leaf)
+                if leaf_conf and leaf_conf.match_identity(leaf) == match_identity:
+                    possible_targets.add(workspace)
+        if current_workspace in possible_targets:
+            return
+        if possible_targets:
+            target = possible_targets.pop()
+            await self.i3.command(f'[con_id={window.id}] move container to workspace {target.name}; [con_id={window.id}] focus')
 
     async def rename_all(self):
         tree = await self.i3.get_tree()
@@ -58,10 +83,17 @@ class Watcher:
                 yield leaf_symbol
 
     def get_symbol(self, leaf: Con):
+        conf, match = self.get_config(leaf)
+        if conf is None:
+            return None
+        return conf.get_symbol(leaf, match)
+
+    def get_config(self, leaf: Con) -> Tuple[Optional[ClientConfig], Optional[Match[str]]]:
         for conf in self.config.client_configs.values():
             match = conf.match(leaf)
             if match:
-                return conf.get_symbol(leaf, match)
+                return conf, match
+        return None, None
 
     async def commit(self):
         await self.i3.command(u';'.join(self.commands))

@@ -13,3 +13,5 @@ clients:
   code-oss: code
 deliminator: " "
 default_icon: dot-circle
+default:
+  new_desktop: true

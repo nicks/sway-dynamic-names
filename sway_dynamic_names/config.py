@@ -2,7 +2,7 @@ import os
 import re
 from pathlib import Path
 from shutil import copyfile
-from typing import Dict, Union, List, Match
+from typing import Dict, Union, List, Match, TypeVar, Type
 
 import yaml
 from fontawesome import icons
@@ -13,42 +13,66 @@ POSSIBLE_SWAY_CONFIG_PATHS = ['sway', 'i3']
 
 CONFIG_FILE_NAME = 'sdn-config.yaml'
 
-DEFAULT_DELIMITER = "|"
+DEFAULT_DELIMITER = " "
 DEFAULT_DEFAULT_ICON = "dot-circle"
 
-WINDOW_IDENTIFIERS = ('name', 'window_title', 'window_instance', 'window_class')
+WINDOW_IDENTIFIERS = ('name', 'window_title', 'window_instance', 'window_class', 'app_id')
+
 
 class ConfigException(Exception):
     pass
+
 
 class RuntimeConfigException(Exception):
     pass
 
 
+T = TypeVar('T')
+
+
 class ClientConfig:
-    def __init__(self, key: str, data: Union[str, Dict]):
+    def __init__(self, key: str, data: Union[str, Dict], default: Union[str, Dict] = None):
+        if default is None:
+            default = {}
         self.key = key
         self.extra = None
         if type(data) == str:
-            raw_icon = data
-        elif type(data) == dict:
-            raw_icon = data['icon']
-            self.extra = data.get('extra', None)
-            if type(self.extra) != str:
-                raise ConfigException(f'clients/{key}/extra: invalid entity {self.extra}')
-        else:
+            data = {'icon': data}
+
+        if type(data) != dict:
             raise ConfigException(f'clients/{key}: invalid entity {data}')
 
-        self.icon = icons.get(raw_icon, raw_icon)
+        self.data = {**default, **data}
+        raw_icon = self._get_with_type('icon', str)
+        self.icon: str = icons.get(raw_icon, raw_icon)
 
-    def match(self, leaf: Con):
+        self.extra: str = self._get_with_type('extra', str, allow_none=True)
+
+        self.new_desktop = self._get_with_type('new_desktop', bool, allow_none=True)
+
+    def _get_with_type(self, attr: str, expected: Type[T], default=None, allow_none=False) -> T:
+        value = self.data.get(attr, default)
+        if type(value) == expected or (value is None and allow_none):
+            return value
+        raise ConfigException(f'clients/{self.key}/{attr}: invalid value {value}')
+
+    def _match(self, leaf: Con):
         for identifier in WINDOW_IDENTIFIERS:
             name = getattr(leaf, identifier, None)
             if name is None:
                 continue
             match = re.match(self.key, name, re.IGNORECASE)
             if match:
-                return match
+                return match, name, identifier
+        return None, None, None
+
+    def match(self, leaf: Con) -> Match[str]:
+        match, name, identifier = self._match(leaf)
+        return match
+
+    def match_identity(self, leaf: Con):
+        match, name, identifier = self._match(leaf)
+        return name, identifier
 
     def get_symbol(self, leaf: Con, match: Match[str]):
         return Symbol(self, leaf, match)
@@ -68,7 +92,8 @@ class Symbol:
         try:
             return value.format(*self.match.groups(), **d)
         except IndexError:
-            raise RuntimeConfigException(f"error formatting {value} with numbered values {self.match.groups()} and named values {d}")
+            raise RuntimeConfigException(
+                f"error formatting {value} with numbered values {self.match.groups()} and named values {d}")
 
     def get(self, workspaces_symbols: List[List["Symbol"]]):
         if self.extra is not None:
@@ -94,8 +119,12 @@ class Config:
                 data = yaml.safe_load(f)
             self._last_modified = os.path.getmtime(self.config_location)
 
-            self._client_configs = {k: ClientConfig(k, v) for k, v in data.get('clients', {}).items()}
+            default_client_config = data.get('default', {})
+
+            self._client_configs = {k: ClientConfig(k, v, default_client_config) for k, v in
+                                    data.get('clients', {}).items()}
             self._delimiter = data.get('deliminator', DEFAULT_DELIMITER)
+
             self._default_icon = data.get('default_icon', DEFAULT_DEFAULT_ICON)
             self._default_icon = icons.get(self._default_icon, self._default_icon)
 
