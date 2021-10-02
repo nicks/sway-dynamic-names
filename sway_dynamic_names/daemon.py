@@ -49,6 +49,9 @@ class Watcher:
         if possible_targets:
             target = possible_targets.pop()
             await self.i3.command(f'[con_id={window.id}] move container to workspace {target.name}; [con_id={window.id}] focus')
+        else:
+            await self.i3.command(
+                f'[con_id={window.id}] move container to workspace {self.config.default_icon}; [con_id={window.id}] focus')
 
     async def rename_all(self):
         tree = await self.i3.get_tree()
