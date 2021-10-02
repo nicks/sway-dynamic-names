@@ -1,9 +1,8 @@
-import re
-from typing import List, Iterable, Dict, Tuple, Match, Optional
+from typing import List, Dict, Tuple, Match, Optional
 
 from i3ipc import Event
 from i3ipc.aio import Connection, Con
-from i3ipc.events import IpcBaseEvent, WindowEvent
+from i3ipc.events import IpcBaseEvent
 
 from .config import Config, Symbol, ClientConfig
 
