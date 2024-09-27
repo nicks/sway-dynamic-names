@@ -58,11 +58,11 @@ class Watcher:
         workspace_symbols: Dict[Con, List[Symbol]] = {w: list(self.get_symbols(w)) for w in workspaces}
         workspace_icons = self.compute_workspace_icons(workspace_symbols)
         for num, workspace in enumerate(workspace_icons.keys()):
-            await self.rename_workspace(workspace, num, workspace_icons[workspace])
+            await self.rename_workspace(workspace, num+1, workspace_icons[workspace])
         await self.commit()
 
     async def rename_workspace(self, workspace: Con, num: int, new_name: str):
-        new_name = f"{num}:{new_name}"
+        new_name = f"{num} | {new_name}"
         if workspace.name != new_name:
             workspace_name_san = workspace.name.replace('"', '\\"')
             new_name_san = new_name.replace('"', '\\"')
