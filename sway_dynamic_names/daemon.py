@@ -62,7 +62,7 @@ class Watcher:
         await self.commit()
 
     async def rename_workspace(self, workspace: Con, num: int, new_name: str):
-        new_name = f"{num} | {new_name}"
+        new_name = f"{new_name}"
         if workspace.name != new_name:
             workspace_name_san = workspace.name.replace('"', '\\"')
             new_name_san = new_name.replace('"', '\\"')
